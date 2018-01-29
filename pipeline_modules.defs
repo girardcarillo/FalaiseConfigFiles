@@ -21,7 +21,8 @@ modules : string[7] = "MockCalibration"        \
                       "ChargedParticleTracker" \
                       "GammaClustering"        \
                       "ParticleIdentification" \
-                      "mon_second_super_module"
+                      "TimeDifference"
+                      # "mon_second_super_module"
 
 
 ##########################################################
@@ -1340,8 +1341,16 @@ TD_label : string  = "TD"
 logging.priority : string = "debug"
 
 ####################################################################
-# My First module
-[name="mon_second_super_module" type="MySecondModule"]
+# My Second module
+#[name="mon_second_super_module" type="MySecondModule"]
 
 #@description Logging priority
+#logging.priority : string = "debug"
+
+
+####################################################################
+# TimeDifference Module
+[name="TimeDifference" type="TimeDifference"]
+
+# @description Logging priority
 logging.priority : string = "debug"
