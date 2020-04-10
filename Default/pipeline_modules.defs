@@ -1,0 +1,1339 @@
+
+#@description Sample SuperNEMO Demonstrator Reconstruction modules
+#@key_label  "name"
+#@meta_label "type"
+
+
+#####################################################################
+# Must define "pipeline" as this is the module flreconstruct will use
+# Define the main chain of modules in the pipeline:
+# 1. Mock digitize and mock calibrate
+# 2. CAT clusterization of tracker hits
+# 3. TrackFit-ting tracker cluster hits
+# 4. Reconstruct charged particle tracks
+[name="pipeline" type="dpp::chain_module"]
+#@config The main pipeline
+
+#@description The list of processing modules chained along the pipeline
+modules : string[6] = "MockCalibration"        \
+                      "CATTrackerClusterizer"  \
+                      "TrackFit"               \
+                      "ChargedParticleTracker" \
+                      "GammaClustering"        \
+                      "ParticleIdentification" 
+                      #"TimeDifference"
+
+
+##########################################################
+# Here is the first in the pipeline, itself a chain module
+[name="MockCalibration" type="dpp::chain_module"]
+#@config A chain of processing modules that performs the mock calibration
+
+#@description The list of processing modules chained along the pipeline
+modules : string[2] = "CalibrateTracker" "CalibrateCalorimeters"
+
+###########################################################
+# Here is the first part of the mock calibration processing
+[name="CalibrateTracker" type="snemo::processing::mock_tracker_s2c_module"]
+#@config A mock tracker calibration module
+
+# #@description The label of the 'Simulated Data' bank
+# SD_label : string  = "SD"
+
+# #@description The label of the 'Calibrated Data' bank
+# CD_label : string  = "CD"
+
+#@description The name of the geometry service
+Geo_label : string = "geometry"
+
+# #@description The category of hits to be processed as Geiger hits
+# hit_category  : string  = "gg"
+
+# #@description Type of the pseudo-random numbers generator setup (GSL PRNG)
+# random.id  : string  = "mt19937"
+
+# #@description Seed for the pseudo-random numbers generator (GSL PRNG)
+# random.seed  : integer = 12345
+
+#@description Store the hit ID of the truth MC Geiger hit from which the calibrated hit that has been built
+store_mc_hit_id : boolean = 1
+
+# #@description Store the hit ID of the truth track and parent track from which the calibrated hit that has been built
+# store_mc_truth_track_ids : boolean = 0
+
+# #@description Drift cell effective/active diameter
+# cell_diameter : real as length  = 44.0 mm
+
+# #@description Drift cell effective/active length
+# cell_length   : real as length  = 2900.0 mm
+
+# #@description Error on anode drift time
+sigma_anode_time : real as time = 200 ns
+#12.5 ns
+
+# #@description Error on cathode drift time
+# sigma_cathode_time : real as time = 100 ns
+
+# #@description Maximum drift time
+# tcut : real as time = 10.0 us
+
+# #@description Anode efficiency
+# base_anode_efficiency   : real = 1.0
+
+# #@description Cathode efficiency
+# base_cathode_efficiency : real = 1.0
+
+# #@description Plasma longitudinal speed
+# plasma_longitudinal_speed : real as speed = 5.0 cm/us
+
+# #@description Error on plasma longitudinal speed
+# sigma_plasma_longitudinal_speed : real as speed = 0.5 cm/us
+
+# #@description Error on reconstructed longitudinal position (from a plot by Irina)
+# sigma_z                 : real as length = 1.0 cm
+
+# #@description Error on reconstructed longitudinal position when one cathode signal is missing
+# sigma_z_missing_cathode : real as length = 5.0 cm
+
+# #@description Error parametrization on reconstructed horizontal position (parameters of a fit of data by Irina)
+# sigma_r_a  : real as length = 0.425 mm
+
+# #@description Error parametrization on reconstructed horizontal position (parameters of a fit of data by Irina)
+# sigma_r_b  : real = 0.0083
+
+# #@description Error parametrization on reconstructed horizontal position (parameters of a fit of data by Irina)
+# sigma_r_r0 : real as length = 12.25 mm
+
+# #@description Drift time threshold to consider the hit as 'peripheral'
+# peripheral_drift_time_threshold : real as time = 4.0 microsecond
+
+# #@description Drift time threshold to consider the hit as 'delayed'
+# delayed_drift_time_threshold    : real as time = 10.0 microsecond
+
+
+############################################################
+# Here is the second part of the mock calibration processing
+[name="CalibrateCalorimeters" type="snemo::processing::mock_calorimeter_s2c_module"]
+#@config A mock calorimeter calibration module
+
+# #@description The label of the 'Simulated Data' bank
+# SD_label  : string  = "SD"
+
+# #@description The label of the 'Calibrated Data' bank
+# CD_label  : string  = "CD"
+
+#@description The name of the geometry service
+#Geo_label : string = "geometry"
+
+# #@description The cluster time width (trigger time window)
+# cluster_time_width : real as time = 100 ns
+
+# #@description Type of the pseudo-random numbers generator setup (GSL PRNG)
+# random.id : string  = "mt19937"
+
+#@description Seed for the pseudo-random numbers generator (GSL PRNG)
+random.seed : integer = 12345
+
+#@description Store the hit ID of the true MC calorimeter hit from which the calibrated hit that has been built
+store_mc_hit_id : boolean = 1
+
+# #@description Take into account alpha quenching
+# alpha_quenching    : boolean = 1
+
+#@description The names of the calorimeter-like hit categories to be processed
+hit_categories     : string[3]  = "calo" "xcalo" "gveto"
+
+#@description calo optical lines resolutions (FWHM @ 1 MeV)
+calo.energy.resolution      : real as fraction = 8  %
+
+#@description xcalo optical lines resolutions (FWHM @ 1 MeV)
+xcalo.energy.resolution     : real as fraction = 12 %
+
+#@description gveto optical lines resolutions (FWHM @ 1 MeV)
+gveto.energy.resolution     : real as fraction = 15 %
+
+#@description calo optical lines alpha quenching parameters
+calo.alpha_quenching_parameters  : real[3] = 77.4 0.639 2.34
+
+#@description xcalo optical lines alpha quenching parameters
+xcalo.alpha_quenching_parameters : real[3] = 77.4 0.639 2.34
+
+#@description gveto optical lines alpha quenching parameters
+gveto.alpha_quenching_parameters : real[3] = 77.4 0.639 2.34
+
+#@description calo optical lines trigger low thresholds
+calo.energy.low_threshold   : real as energy =  50 keV
+
+#@description xcalo optical lines trigger low thresholds
+xcalo.energy.low_threshold  : real as energy =  50 keV
+
+#@description gveto optical lines trigger low thresholds
+gveto.energy.low_threshold  : real as energy =  50 keV
+
+#@description calo optical lines trigger high thresholds
+calo.energy.high_threshold  : real as energy = 150 keV
+
+#@description xcalo optical lines trigger high thresholds
+xcalo.energy.high_threshold : real as energy = 150 keV
+
+#@description gveto optical lines trigger high thresholds
+gveto.energy.high_threshold : real as energy = 150 keV
+
+#@description calo time resolution parameters
+calo.scintillator_relaxation_time  : real as time = 0.0 ns
+
+#@description xcalo time resolution parameters
+xcalo.scintillator_relaxation_time : real as time = 0.0 ns
+
+#@description gveto time resolution parameters
+gveto.scintillator_relaxation_time : real as time = 0.0 ns
+
+
+###############################################################################
+# Here is the second module in the pipeline: the CAT tracker clustering module
+# Only main properties have been set : see the
+# Falaise/modules/CAT documentation for more details
+[name="CATTrackerClusterizer" type="snemo::reconstruction::cat_tracker_clustering_module"]
+#@config Parameters for the Cellular Automaton Tracking algorithm (CAT)
+
+##################
+# The CAT module #
+##################
+
+# #@description Set the logging priority threshold of the module
+# logging.priority : string = "fatal"
+
+#@description The name of the 'geometry' service
+Geo_label  : string  = "geometry"
+
+# #@description The name of the 'calibrated data' bank used as input
+# CD_label  : string  = "CD"
+
+# #@description The name of the 'tracker clustering data' bank used as output
+# TCD_label  : string  = "TCD"
+
+################################
+# The base tracker clusterizer #
+################################
+
+# #@description Set the logging priority threshold of the module
+# TC.logging.priority : string = "fatal"
+
+# #@description The name of the SuperNEMO geometry locator plugin
+# TC.locator_plugin_name : string = "locators_driver"
+
+# #@description The minimum time to consider a Geiger hit as delayed
+# TPC.delayed_hit_cluster_time : real = 10 us
+
+#@description Pre-clusterizer processing of prompt hits
+TPC.processing_prompt_hits : boolean = 1
+
+#@description Pre-clusterizer processing of delayed hit
+TPC.processing_delayed_hits : boolean = 0
+
+#@description Pre-clusterizer processing separately both sides of the tracking chamber
+TPC.split_chamber : boolean = 0
+
+##################
+# The CAT driver #
+##################
+
+# #@description Force the CAT algorithm to consider a 25 gauss magnetic field (temporary trick)
+# CAT.magnetic_field        : real    = 25 gauss
+
+#@description To be described
+CAT.level                 : string  = "mute"
+
+# #@description To be described
+# CAT.max_time              : real    = 5000.0 ms
+
+# #@description To be described
+# CAT.small_radius          : real    = 1.0 mm
+
+# #@description To be described
+# CAT.probmin               : real    = 0.0
+
+# #@description To be described
+# CAT.nofflayers            : integer = 1
+
+# #@description To be described
+# CAT.first_event           : integer = -1
+
+# #@description To be described
+# CAT.ratio                 : real    = 10000.0
+
+# #@description To be described
+# CAT.sigma_z_factor        : real = 1.0
+
+
+####################################################################
+# Here is the third in the pipeline: the TrackFit module
+# Only main properties have been set : see the
+# Falaise/modules/TrackFit documentation for more details
+[name="TrackFit" type="snemo::reconstruction::trackfit_tracker_fitting_module"]
+#@config Parameters for the TrackFit algorithm
+
+#######################
+# The TrackFit module #
+#######################
+
+# #@description Set the logging priority threshold
+# logging.priority : string = "fatal"
+
+#@description The label of the Geometry service
+Geo_label : string  = "geometry"
+
+# #@description The label of the input 'Tracker Clustering Data' bank
+# TCD_label : string  = "TCD"
+
+# #@description The label of the output 'Tracker Trajectory Data' bank
+# TTD_label : string  = "TTD"
+
+###########################
+# The base tracker fitter #
+###########################
+
+#@description The maximum number of fits to be saved (0 means all will be kept)
+maximum_number_of_fits : integer = 0
+
+# #@description Set the name of the Geiger cell locator geometry plugin name
+# locator_plugin_name : string = "locators_driver"
+
+#######################
+# The TrackFit driver #
+#######################
+
+#@description Use drift time (re)calibration (values: "default", "snemo")
+drift_time_calibration_label : string = "snemo"
+
+#@description Fit models ("helix", "line" or both)
+fitting_models : string[1] = "helix"# only line when no magnetic field
+
+### fitting_models : string[2] = "helix" "line"
+
+############################################
+# Parameters to compute the line fit guess #
+############################################
+
+#@description 'Line' fit only guess ("BB", "BT", "TB", "TT")
+line.only_guess  : string[4] = "BB" "BT" "TB" "TT"
+
+# #@description Set logging priority threshold for line guess driver
+# line.guess.logging.priority : string = "fatal"
+
+# #@description Use max radius (cell size) to construct initial guess point (1) or use the effective drift Geiger distance of the hit (0)
+# line.guess.use_max_radius    : boolean = 0
+
+# #@description Apply a factor (>0) to the max radius (devel mode)
+# line.guess.max_radius_factor : real = 1.0
+
+# #@description Use guess trust (1) or keep all of the guess fits (0) and select later
+# line.guess.use_guess_trust   : boolean = 0
+
+# #@description Mode for trusting a fit guess ("counter", "barycenter")
+# line.guess.guess_trust_mode  : string = "counter"
+
+#@description Fit the delayed Geiger cluster
+line.guess.fit_delayed_clusters : boolean = 1
+
+######################################
+# Parameters to perform the line fit #
+######################################
+
+# #@description Print the status of the fit stepper at each step (devel only)
+# line.fit.step_print_status : boolean = 0
+
+# #@description Plot the 2D view of the fitted data at each step (devel only)
+# line.fit.step_draw         : boolean = 0
+
+# #@description Track fit adds start time as an additionnal parameter to the fit (needs a calibration driver)
+# line.fit.fit_start_time    : boolean = 0
+
+# #@description Track fit recomputes the drift distance from drift time (needs a calibration driver)
+# line.fit.using_drift_time  : boolean = 0
+
+############################################
+# Parameters to compute the helix fit guess #
+############################################
+
+#@description 'Helix' fit only guess ("BBB", "BBT", "BTB", "BTT", "TBB", "TBT", "TTB", "TTT")
+helix.only_guess : string[8] = "BBB" "BBT" "BTB" "BTT" "TBB" "TBT" "TTB" "TTT"
+
+# #@description Set logging priority threshold for line guess driver
+# helix.guess.logging.priority : string = "fatal"
+
+# #@description Use max radius (cell size) to construct initial guess point (1) or use the effective drift Geiger distance of the hit (0)
+# helix.guess.use_max_radius    : boolean = 0
+
+# #@description Apply a factor (>0) to the max radius (devel mode)
+# helix.guess.max_radius_factor : real = 1.0
+
+# #@description Use guess trust (1) or keep all of the guess fits (0) and select later
+# helix.guess.use_guess_trust   : boolean = 0
+
+# #@description Mode for trusting a fit guess ("counter", "barycenter")
+# helix.guess.guess_trust_mode  : string = "counter"
+
+# #@description Fit the delayed geiger cluster (by default, false since this mode is devoted to line fit)
+# helix.guess.fit_delayed_clusters : boolean = 0
+
+#######################################
+# Parameters to perform the helix fit #
+#######################################
+
+# #@description Print the status of the fit stepper at each step (devel only)
+# helix.fit.step_print_status : boolean = 0
+
+# #@description Plot the 2D view of the fitted data at each step (devel only)
+# helix.fit.step_draw         : boolean = 0
+
+# #@description Track fit recomputes the drift distance from drift time (needs a calibration driver)
+# helix.fit.using_drift_time  : boolean = 0
+
+# #@description Allow a fitted track to begin not tangential to the first hit
+# helix.fit.using_first       : boolean = 0
+
+# #@description Allow a fitted track to end not tangential to the last hit
+# helix.fit.using_last        : boolean = 0
+
+
+#################################################################################
+# Here is the fourth module in the pipeline: the charged particle tracking module
+[name="ChargedParticleTracker" type="snemo::reconstruction::charged_particle_tracking_module"]
+#@config Parameters for the Charged Particle Tracking module
+
+# #@description Set the logging priority threshold for the module
+# logging.priority : string = "warning"
+
+#@description The label of the Geometry service
+Geo_label : string  = "geometry"
+
+# #@description The name of the 'calibrated data' bank used as input
+# CD_label  : string  = "CD"
+
+# #@description The name of the 'tracker trajectory data' bank used as input
+# TTD_label  : string  = "TTD"
+
+# #@description The name of the 'particle track data' bank used as output
+# PTD_label  : string  = "PTD"
+
+#@description List of drivers to be used (see description below)
+drivers : string[3] = "VED" "CCD" "CAD"
+
+####################################################################
+# Vertex Extrapolation Driver :
+# used to find vertices of the tracker trajectory
+# either on the source foil or the calorimeter walls
+
+# #@description Vertex Extrapolation Driver logging priority
+# VED.logging.priority : string = "warning"
+
+# #@description Use linear extrapolation (not implemented yet)
+# VED.use_linear_extrapolation : boolean = 0
+
+####################################################################
+# Charge Computation Driver :
+# used to determine the track electric charge given
+# the particle coming from the source foil
+
+# #@description Charge Computation Driver logging priority
+# CCD.logging.priority : string = "warning"
+
+# #@description Charge sign convention
+# CCD.charge_from_source : boolean = 1
+
+####################################################################
+# Calorimeter Association Driver :
+# used to associate particle track to calibrated
+# calorimeter hits (given a tolerance)
+
+# #@description Calorimeter Association Driver logging priority
+# CAD.logging.priority : string = "warning"
+
+# #@description Maximum matching distance for track/calo association
+# CAD.matching_tolerance : real as length = 100 mm
+
+# #@description Use a simpler approach by looking for Geiger cells in front of calo (not implemented yet)
+# CAD.use_last_geiger_cell : boolean = 0
+
+####################################################################
+# Gamma reconstruction :
+[name="GammaClustering" type="snemo::reconstruction::gamma_clustering_module"]
+
+#@description Logging flag
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label of the Geometry service
+Geo_label : string  = "geometry"
+
+#@description The label of the 'Particle Track Data' bank
+PTD_label : string  = "PTD"
+
+#@description Gamma algorithm logging priority
+BGB.logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description Enable the extrapolation to the source foil
+BGB.add_foil_vertex_extrapolation : boolean = true
+
+#@description Minimal internal probability for foil vertex extrapolation
+BGB.add_foil_vertex_extrapolation.minimal_probability : real as fraction = 4 %
+
+#@description Enable the search for gamma from annihilation
+BGB.add_gamma_from_annihilation : boolean = false
+
+#@description Minimal internal probability for gamma from annihilation
+BGB.add_gamma_from_annihilation.minimal_probability : real as fraction = 4 %
+
+#@description Enable selection of calorimeter hits
+BGB.select_calorimeter_hits : boolean = true
+
+#@description Calorimeter tags
+BGB.select_calorimeter_hits.tags : string[2] = "__isolated" "__neighbour"
+
+#@description List of drivers to be used (see description below)
+driver : string = "GC"
+
+#@description The time spread between calorimeter hits within a cluster
+GC.cluster_time_range : real as time = 6 ns
+# 0 ns -> tracking only
+#@description The geometrical condition to cluster calorimeter hits ("side", "diagonal", "first", "second")
+GC.cluster_grid_mask : string = "first"
+
+#@description The minimal probability required between clusters to associate them
+GC.minimal_internal_probability : real as fraction = 25 %
+# 100 % -> clustering only
+#@description The minimal probability required between clusters to associate them
+GC.sigma_time_good_calo : real as time = 2.5 ns
+
+                      
+####################################################################
+# Particle Identification :
+[name="ParticleIdentification" type="snemo::reconstruction::topology_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description Geometry service
+Geo_label : string = "geometry"
+
+#@description The label of the Cut service
+Cut_label : string  = "Cuts"
+
+# #@description The main configuration file for the embedded cut manager
+# cut_manager.config : string as path =  "@configuration:cut_manager.conf"
+
+#@description The label of the input 'Particle Track Data' bank
+PTD_label : string  = "PTD"
+
+#@description The label of the input 'Topology Data' bank
+TD_label : string  = "TD"
+
+#@description Logging priority
+PID.logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The PID mode
+PID.mode.label : boolean = true
+
+#@description The list of particle identification definition
+PID.definitions : string[4] = "electron_definition" \
+                              "gamma_definition" \
+                              "positron_definition" \
+                              "alpha_definition" \
+
+#@description The label associated to 'electron' definition
+PID.electron_definition.label : string = "electron"
+
+#@description The label associated to 'gamma' definition
+PID.gamma_definition.label : string = "gamma"
+
+#@description The label associated to 'positron' definition
+PID.positron_definition.label : string = "positron"
+
+#@description The label associated to 'alpha' definition
+PID.alpha_definition.label : string = "alpha"
+
+#@description List of drivers to be used (see description below)
+drivers : string[4] = "TOFD" "VD" "AD" "ED"
+
+#@description Topology Driver logging priority
+TOFD.logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description Topology Driver logging priority
+VD.logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description Topology Driver logging priority
+AD.logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description Topology Driver logging priority
+ED.logging.priority : string = @variant(core:logging_priority|"warning")
+
+
+
+
+[name="channel_2e3g_internal" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "2e3g::internal"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "io_output_2e3g_int_channel"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "io_output_other_2e3g_channels"
+
+[name="channel_2e2g_internal" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "2e2g::internal"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "io_output_2e2g_int_channel"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "io_output_other_2e2g_channels"
+
+[name="channel_2e1g_internal" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "2e1g::internal"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "io_output_2e1g_int_channel"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "io_output_other_2e1g_channels"
+
+[name="channel_1e3g_internal" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "1e3g::internal"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "io_output_1e3g_int_channel"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "io_output_other_1e3g_channels"
+
+[name="channel_1e2g_internal" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "1e2g::internal"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "io_output_1e2g_int_channel"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "io_output_other_1e2g_channels"
+
+[name="channel_1e1g_external" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "1e1g::external"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "io_output_1e1g_ext_channel"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "io_output_other_1e1g_channels"
+
+[name="channel_1e1g_internal" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "1e1g::internal"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "io_output_1e1g_int_channel"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "channel_1e1g_external"
+
+[name="channel_2p_crossing_positron" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "2p::crossing"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "io_output_crossing_pp_channel"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "io_output_other_2p_channels"
+
+[name="channel_2p_internal" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "2p::internal"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "io_output_2p_int_channel"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "channel_2p_crossing_positron"
+
+[name="channel_1e1p_crossing" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "1e1p::crossing"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "io_output_1e1p_crossing_channel"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "io_output_other_1e1p_channels"
+
+[name="channel_1e1p_internal" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "1e1p::internal"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "io_output_1e1p_int_channel"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "channel_1e1p_crossing"
+
+[name="channel_1e1a_common" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "1e1a::common"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "io_output_1e1a_channel"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "io_output_other_1e1a_channels"
+
+[name="channel_1e_source" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "1e::source"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "io_output_1e_source_channel"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "io_output_other_1e_channels"
+
+[name="channel_2e_crossing_electron" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "2e::crossing"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "io_output_crossing_ee_channel"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "io_output_other_2e_channels"
+
+[name="channel_2e_internal" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "2e::internal"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "io_output_2e_int_channel"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "channel_2e_crossing_electron"
+
+[name="topology_pattern_cut_2e3g" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "2e3g::classification"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "channel_2e3g_internal"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "io_output_other_2eNg_topologies"
+
+[name="topology_pattern_cut_2e2g" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "2e2g::classification"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "channel_2e2g_internal"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "topology_pattern_cut_2e3g"
+
+[name="topology_pattern_cut_2e1g" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "2e1g::classification"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "channel_2e1g_internal"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "topology_pattern_cut_2e2g"
+
+[name="topology_pattern_cut_G" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "2eNg::classification"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "topology_pattern_cut_2e1g"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "io_output_other_topologies"
+
+[name="topology_pattern_cut_1e3g" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "1e3g::classification"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "channel_1e3g_internal"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "io_output_other_1eNg_topologies"
+
+[name="topology_pattern_cut_1e2g" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "1e2g::classification"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "channel_1e2g_internal"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "topology_pattern_cut_1e3g"
+
+[name="topology_pattern_cut_1e1g" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "1e1g::classification"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "channel_1e1g_internal"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "topology_pattern_cut_1e2g"
+
+[name="topology_pattern_cut_F" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "1eNg::classification"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "topology_pattern_cut_1e1g"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "topology_pattern_cut_G"
+
+[name="topology_pattern_cut_E" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "2p::classification"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "channel_2p_internal"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "topology_pattern_cut_F"
+
+[name="topology_pattern_cut_D" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "1e1p::classification"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "channel_1e1p_internal"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "topology_pattern_cut_E"
+
+[name="topology_pattern_cut_C" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "1e1a::classification"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "channel_1e1a_common"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "topology_pattern_cut_D"
+
+[name="topology_pattern_cut_B" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "1e::classification"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "channel_1e_source"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "topology_pattern_cut_C"
+
+[name="topology_pattern_cut" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "2e::classification"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "channel_2e_internal"
+
+# #@description The name of the module to be processed when condition is checked
+# then_module : string = "io_output_2e_topology"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "topology_pattern_cut_B"
+
+# #@description The name of the module to be processed when condition is NOT checked
+# else_module : string = "io_output_other_topologies"
+
+[name="io_output_unassociated_calos_topology_selected" type="dpp::output_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description Output file mode
+files.mode : string = "single"
+
+#@description Path to output data file
+files.single.filename : string as path = "/tmp/${USER}/snemo.d/io_output_unassociated_calos_topology_selected.brio"
+
+#@description The label of the Context service
+Ctx_label : string  = "Ctx"
+
+[name="io_output_unassociated_calos_topology_non_selected" type="dpp::output_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description Output file mode
+files.mode : string = "single"
+
+#@description Path to output data file
+files.single.filename : string as path = "/tmp/${USER}/snemo.d/io_output_unassociated_calos_topology_non_selected.brio"
+
+#@description The label of the Context service
+Ctx_label : string  = "Ctx"
+
+[name="process_unassociated_calos_topology_cut" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "unassociated_calos_topology_cut"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "io_output_unassociated_calos_topology_selected"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "io_output_unassociated_calos_topology_non_selected"
+
+[name="process_tof_and_delta_cut" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "tof_and_delta_cut"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "io_output_topology_selected"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "io_output_topology_non_selected"
+
+[name="process_internal_probability" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "2e_internal_probability_cut"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "io_output_topology_selected"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "io_output_topology_non_selected"
+
+[name="io_output_2e_topology_selected" type="dpp::output_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description Output file mode
+files.mode : string = "single"
+
+#@description Path to output data file
+files.single.filename : string as path = "/tmp/${USER}/snemo.d/io_output_2e_topology_selected.brio"
+
+#@description The label of the Context service
+Ctx_label : string  = "Ctx"
+
+[name="io_output_2e_topology_non_selected" type="dpp::output_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description Output file mode
+files.mode : string = "single"
+
+#@description Path to output data file
+files.single.filename : string as path = "/tmp/${USER}/snemo.d/io_output_2e_topology_non_selected.brio"
+
+#@description The label of the Context service
+Ctx_label : string  = "Ctx"
+
+[name="process_2e_topology_cut" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "2e_topology_cut"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "io_output_2e_topology_selected"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "io_output_2e_topology_non_selected"
+
+[name="io_output_1e_topology_selected" type="dpp::output_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description Output file mode
+files.mode : string = "single"
+
+#@description Path to output data file
+files.single.filename : string as path = "/tmp/${USER}/snemo.d/io_output_1e_topology_selected.brio"
+
+#@description The label of the Context service
+Ctx_label : string  = "Ctx"
+
+[name="io_output_1e_topology_non_selected" type="dpp::output_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description Output file mode
+files.mode : string = "single"
+
+#@description Path to output data file
+files.single.filename : string as path = "/tmp/${USER}/snemo.d/io_output_1e_topology_non_selected.brio"
+
+#@description The label of the Context service
+Ctx_label : string  = "Ctx"
+
+[name="process_1e_topology_cut" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "1e_topology_cut"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "io_output_1e_topology_selected"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "io_output_1e_topology_non_selected"
+
+[name="io_output_1e1g_topology_selected" type="dpp::output_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description Output file mode
+files.mode : string = "single"
+
+#@description Path to output data file
+files.single.filename : string as path = "/tmp/${USER}/snemo.d/io_output_1e1g_topology_selected.brio"
+
+#@description The label of the Context service
+Ctx_label : string  = "Ctx"
+
+[name="io_output_1e1g_topology_non_selected" type="dpp::output_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description Output file mode
+files.mode : string = "single"
+
+#@description Path to output data file
+files.single.filename : string as path = "/tmp/${USER}/snemo.d/io_output_1e1g_topology_non_selected.brio"
+
+#@description The label of the Context service
+Ctx_label : string  = "Ctx"
+
+[name="process_1e1g_topology_cut" type="dpp::if_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The label/name of the cut service
+cut_service.label : string = "Cuts"
+
+#@description The name of the condition cut
+condition_cut : string = "1e1g_topology_cut"
+
+#@description The name of the module to be processed when condition is checked
+then_module : string = "io_output_1e1g_topology_selected"
+
+#@description The name of the module to be processed when condition is NOT checked
+else_module : string = "io_output_1e1g_topology_non_selected"
+
+# [name="topology_chain" type="dpp::chain_module"]
+
+# #@description Logging priority
+# logging.priority : string = @variant(core:logging_priority|"warning")
+
+# #@description The list of processing modules to be applied (in this order)
+# modules : string[4] = \
+# "minimum_bias_chain" \
+# "process_2e_topology_cut" \
+# "process_1e_topology_cut" \
+# "process_1e1g_topology_cut"
+
+[name="2e_topology_chain" type="dpp::chain_module"]
+
+#@description Logging priority
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description The list of processing modules to be applied (in this order)
+modules : string[2] = \
+"minimum_bias_chain" \
+"process_2e_topology_cut"
+
+
+[name="2e::classification" type="cuts::multi_and_cut"]
+
+#@description Cut description
+cut.description : string = "Select events with 2e pattern"
+
+#@description Logging priority
+logging.priority : string = "warning"
+
+#@description The cuts to be combined
+cuts : string[4] = \
+"has_topology_data" \
+"has_pattern"    \
+"2e::has_classification_label" \
+"no_pile_up"
+
+
+
+
+[name="2e::internal" type="snemo::cut::channel_cut"]
+
+#@description Cut description
+cut.description : string = "Select events compatible with a beta-beta event"
+
+#@description Logging priority'
+logging.priority : string = @variant(core:logging_priority|"warning")
+
+#@description Cut list
+cuts : string[3] = "int_prob" "vtx_dist" "vtx_loc"
+
+int_prob.cut_label         : string = "good_internal_probability"
+int_prob.measurement_label : string = "tof_e1_e2"
+# ext_prob.cut_label         : string = "bad_external_probability"
+# ext_prob.measurement_label : string = "tof_e1_e2"
+# vtx_prob.cut_label         : string = "good_vertices_probability"
+# vtx_prob.measurement_label : string = "vertex_e1_e2"
+vtx_dist.cut_label         : string = "good_vertices_distance"
+vtx_dist.measurement_label : string = "vertex_e1_e2"
+vtx_loc.cut_label         : string = "vertex_on_foil"
+vtx_loc.measurement_label : string = "vertex_e1_e2"
+
+####################################################################
+# TimeDifference Module
+# [name="TimeDifference" type="TimeDifference"]
+
+# @description Logging priority
+# logging.priority : string = "debug"
+
+
