@@ -21,8 +21,7 @@ modules : string[7] = "MockCalibration"        \
                       "ChargedParticleTracker" \
                       "GammaClustering"        \
                       "ParticleIdentification" \
-                      "TimeDifference"
-                      # "mon_second_super_module"
+                      "processing"
 
 
 ##########################################################
@@ -181,13 +180,13 @@ xcalo.energy.high_threshold : real as energy = 150 keV
 gveto.energy.high_threshold : real as energy = 150 keV
 
 #@description calo time resolution parameters
-calo.scintillator_relaxation_time  : real as time = 6.0 ns
+calo.scintillator_relaxation_time  : real as time = 0.0 ns
 
 #@description xcalo time resolution parameters
-xcalo.scintillator_relaxation_time : real as time = 6.0 ns
+xcalo.scintillator_relaxation_time : real as time = 0.0 ns
 
 #@description gveto time resolution parameters
-gveto.scintillator_relaxation_time : real as time = 6.0 ns
+gveto.scintillator_relaxation_time : real as time = 0.0 ns
 
 
 ###############################################################################
@@ -505,6 +504,7 @@ GC.minimal_internal_probability : real as fraction = 25 %
 # 100 % -> clustering only
 #@description The minimal probability required between clusters to associate them
 GC.sigma_time_good_calo : real as time = 2.5 ns
+
 
 ####################################################################
 # Particle Identification :
@@ -1330,27 +1330,4 @@ vtx_loc.cut_label         : string = "vertex_on_foil"
 vtx_loc.measurement_label : string = "vertex_e1_e2"
 
 ####################################################################
-# My First module
-[name="mon_premier_super_module" type="MyFirstModule"]
-
-#@description The label of the input 'Topology Data' bank
-
-TD_label : string  = "TD"
-
-#@description Logging priority
-logging.priority : string = "debug"
-
-####################################################################
-# My Second module
-#[name="mon_second_super_module" type="MySecondModule"]
-
-#@description Logging priority
-#logging.priority : string = "debug"
-
-
-####################################################################
-# TimeDifference Module
-[name="TimeDifference" type="TimeDifference"]
-
-# @description Logging priority
-logging.priority : string = "debug"
+[name="processing" type="SensitivityModule"]
